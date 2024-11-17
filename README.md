@@ -8,7 +8,7 @@ is appended in the sentence itself.
 Simply pull the repo, and run/build the binary with cargo.
 
 ```shell
-git pull https://github.com/TheTrueColonel/rSentenceHash.git
+git clone https://github.com/TheTrueColonel/rSentenceHash.git
 cd rSentenceHash
 cargo run --release
 ```
