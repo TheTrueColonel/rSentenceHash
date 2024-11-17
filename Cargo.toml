@@ -1,0 +1,32 @@
+[package]
+name = "rSentenceHash"
+version = "1.0.0"
+authors = ["TheTrueColonel"]
+description = "Attempts to find a sentence where the last n characters of the SHA256 hash is appended to the sentense."
+edition = "2021"
+repository = "https://github.com/TheTrueColonel/rSentenceHash"
+readme = "README.md"
+license-file = "LICENSE"
+exclude = ["/.idea/*", "/.git/*"]
+
+[dependencies]
+sha2 = "0.10.8"
+base16ct = { version = "0.2.0", features = ["alloc"] }
+libsw = "3.3.1"
+rayon = "1.10.0"
+
+[dev-dependencies]
+criterion = "0.5.1"
+lazy_static = "1.5.0"
+
+[profile.release]
+debug = false
+lto = "fat"
+codegen-units = 1
+opt-level = 3
+strip = true
+panic = "abort"
+
+[[bench]]
+name = "my_benchmark"
+harness = false
