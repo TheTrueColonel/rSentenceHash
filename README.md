@@ -1,13 +1,9 @@
 # rSentenceHash
 
-___
-
 rSentenceHash is a for-fun project for finding a sentence where the last 9 character of the sentence's SHA256 hash
 is appended in the sentence itself.
 
 # Usage
-
-___
 
 Simply pull the repo, and run/build the binary with cargo.
 
@@ -18,8 +14,6 @@ cargo run --release
 ```
 
 # Performance
-
-___
 
 > Data gathered by my own machines.
 
