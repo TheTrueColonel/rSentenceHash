@@ -21,7 +21,7 @@ use lazy_static::lazy_static;
 use rSentenceHash::unsigned_num_to_hex;
 
 lazy_static! {
-    static ref BUFFER: String = String::with_capacity(16);
+    static ref BUFFER: Vec<u8> = Vec::with_capacity(16);
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {

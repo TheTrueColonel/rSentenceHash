@@ -20,10 +20,10 @@
 * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use std::fmt::Write;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::thread::available_parallelism;
+use color_eyre::eyre::Result;
 use libsw::Sw;
 use sha2::{Digest, Sha256};
 use rayon::prelude::*;
@@ -35,12 +35,16 @@ static ITERATION: AtomicU64 = AtomicU64::new(0);
 static MATCHED: AtomicBool = AtomicBool::new(false);
 static LOG_INTERVAL: u64 = 10_000_000;
 
-fn main() {
-    let thread_count = u16::try_from(available_parallelism().unwrap().get()).map_or(u16::MAX, |n| n);
+fn main() -> Result<()> {
+    color_eyre::install()?;
+    
+    let thread_count = u16::try_from(available_parallelism()?.get()).map_or(u16::MAX, |n| n);
     #[allow(clippy::cast_possible_truncation)]
     let usable_threads = ((u32::from(thread_count) * 3) / 4) as u16; // Can't possibly overflow u16 here
 
     compute_hashes(usable_threads);
+    
+    Ok(())
 }
 
 fn compute_hashes(usable_threads: u16) {
@@ -50,8 +54,8 @@ fn compute_hashes(usable_threads: u16) {
         .into_par_iter()
         .for_each(|_| {
             // Allocate buffers
-            let mut str_iteration_buffer = String::with_capacity(16); // Can hold all hex values up to u64::MAX
-            let mut sentence_buffer = String::with_capacity(64);
+            let mut str_iteration_buffer: Vec<u8> = Vec::with_capacity(16); // Can hold all hex values up to u64::MAX
+            let mut sentence_buffer: Vec<u8> = Vec::with_capacity(64);
 
             let mut hasher = Sha256::new();
 
@@ -62,39 +66,32 @@ fn compute_hashes(usable_threads: u16) {
                 #[allow(clippy::cast_possible_truncation)]
                 unsigned_num_to_hex(current_iteration as usize, &mut str_iteration_buffer);
 
-                let str_iteration_end = if str_iteration_buffer.len() > 9 {
-                    &str_iteration_buffer[str_iteration_buffer.len() - 9..]
-                } else {
-                    &str_iteration_buffer
-                };
+                let str_iteration_end = &str_iteration_buffer[str_iteration_buffer.len() - 9..];
 
                 sentence_buffer.clear();
-                write!(&mut sentence_buffer, "{BASE_SENTENCE}{str_iteration_end}").unwrap();
+                sentence_buffer.extend(BASE_SENTENCE.as_bytes());
+                sentence_buffer.extend(str_iteration_end);
 
-                hasher.update(sentence_buffer.as_bytes());
+                hasher.update(&sentence_buffer);
 
                 let sentence_hash = hasher.finalize_reset();
                 let sentence_hex = base16ct::upper::encode_string(&sentence_hash);
-                let hash_end = if sentence_hex.len() > 9 {
-                    &sentence_hex[sentence_hex.len() - 9..]
-                } else {
-                    &sentence_hex
-                };
+                let hash_end = &sentence_hex[sentence_hex.len() - 9..];
 
-                if str_iteration_end == hash_end {
+                if str_iteration_end == hash_end.as_bytes() {
                     let mut sw = sw.lock().unwrap();
 
                     MATCHED.store(true, Ordering::Release);
 
                     sw.stop().unwrap();
                     println!("Finished in: {:?} | Iteration Count: {} | Threads Used: {}", sw.elapsed(), current_iteration, usable_threads);
-                    println!("Sentence: {sentence_buffer} \nFull Sentence Hash: {sentence_hex} \nHash End: {hash_end} \nIteration Hash End: {hash_end}");
+                    println!("Sentence: {} \nFull Sentence Hash: {sentence_hex} \nHash End: {hash_end} \nIteration Hash End: {hash_end}", String::from_utf8_lossy(&sentence_buffer));
 
                     break;
                 }
 
                 if current_iteration % LOG_INTERVAL == 0 {
-                    println!("{current_iteration} | Iter Str: {str_iteration_end} | Hash End Str: {hash_end}");
+                    println!("{current_iteration} | Iter Str: {} | Hash End Str: {hash_end}", String::from_utf8_lossy(str_iteration_end));
                 }
             }
         });

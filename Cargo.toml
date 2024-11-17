@@ -14,6 +14,7 @@ sha2 = "0.10.8"
 base16ct = { version = "0.2.0", features = ["alloc"] }
 libsw = "3.3.1"
 rayon = "1.10.0"
+color-eyre = "0.6.3"
 
 [dev-dependencies]
 criterion = "0.5.1"
@@ -26,6 +27,9 @@ codegen-units = 1
 opt-level = 3
 strip = true
 panic = "abort"
+
+[profile.dev.package.backtrace]
+opt-level = 3
 
 [[bench]]
 name = "my_benchmark"
