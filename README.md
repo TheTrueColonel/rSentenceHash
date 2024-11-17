@@ -28,7 +28,7 @@ sudo pacman -S base-devel sccache git
 - Install Rust ([Docs][rust-install])
 
 ```shell
-git pull https://github.com/TheTrueColonel/rSentenceHash.git
+git clone https://github.com/TheTrueColonel/rSentenceHash.git
 cd rSentenceHash
 cargo run --release
 ```
@@ -45,6 +45,7 @@ cargo run --release
 | Version | Iterations     | Duration | Iterations per Second | Cores |
 |---------|----------------|----------|-----------------------|-------|
 | 1.0.0   | 48,405,995,370 | 918.937s | ~ 52.676 MIPS         | 12    |
+
 
 - CPU: **Intel Xeon E5-2697 v2 x2**
 - OS: **ProxMox VE 8.2.7**
