@@ -7,7 +7,7 @@ edition = "2021"
 repository = "https://github.com/TheTrueColonel/rSentenceHash"
 readme = "README.md"
 license-file = "LICENSE"
-exclude = ["/.idea/*", "/.git/*"]
+exclude = ["/.idea/*", "/.git/*", "/.github/*"]
 
 [dependencies]
 sha2 = "0.10.8"

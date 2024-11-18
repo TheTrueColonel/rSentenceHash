@@ -13,14 +13,14 @@ is appended in the sentence itself.
 
 ```shell
 sudo apt update
-sudo apt install build-essentials sccache git
+sudo apt install build-essentials git
 ```
 
 ### Arch Linux
 
 ```shell
 sudo pacman -Syu
-sudo pacman -S base-devel sccache git
+sudo pacman -S base-devel git
 ```
 
 ### All Platforms
@@ -58,4 +58,22 @@ cargo run --release
 | 1.0.0   | 48,405,995,370 | 4,513.699s | ~ 10.724 MIPS         | 36    |
 | 1.1.0   | 48,405,995,370 | 1,458.301s | ~ 33.197 MIPS         | 36    |
 
+## Considerations
+
+By default, the program may not be *as* efficient as it could after building.
+You can speed up build time and optimize the binary for your machine with the following `.cargo/config.toml`:
+
+
+```toml
+[target.YOUR_TARGET_PLATFORM]
+rustflags = ["-C", "target-cpu=native"]
+
+[build]
+# Requires sccache for improved build times. Uncomment if available.
+#rustc-wrapper = "sccache"
+```
+
+\* List of `targets` [here][rust-platform-support].
+
 [rust-install]: https://doc.rust-lang.org/cargo/getting-started/installation.html
+[rust-platform-support]: https://doc.rust-lang.org/nightly/rustc/platform-support.html
