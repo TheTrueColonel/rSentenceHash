@@ -2,7 +2,7 @@
 
 ![minimum rustc 1.63](https://img.shields.io/badge/rustc-1.63+-red.svg)
 ![GitHub License](https://img.shields.io/github/license/thetruecolonel/rSentenceHash)
-
+[![Rust](https://github.com/TheTrueColonel/rSentenceHash/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/TheTrueColonel/rSentenceHash/actions/workflows/build.yml)
 
 rSentenceHash is a for-fun project for finding a sentence where the last 9 character of the sentence's SHA256 hash
 is appended in the sentence itself.
