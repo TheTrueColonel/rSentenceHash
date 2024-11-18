@@ -1,6 +1,6 @@
 [package]
 name = "rSentenceHash"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["TheTrueColonel"]
 description = "Attempts to find a sentence where the last n characters of the SHA256 hash is appended to the sentense."
 edition = "2021"
