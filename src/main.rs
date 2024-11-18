@@ -2,24 +2,6 @@
 #![allow(clippy::cargo_common_metadata, clippy::nursery)]
 #![forbid(unsafe_code)]
 
-/**
-* rSentenceHash
-* Copyright (C) 2024  TheTrueColonel
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
-
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::thread::available_parallelism;
@@ -34,6 +16,7 @@ const BASE_SENTENCE: &str = "The last 9 of this fucking sentence's SHA256 is ";
 static ITERATION: AtomicU64 = AtomicU64::new(0);
 static MATCHED: AtomicBool = AtomicBool::new(false);
 static LOG_INTERVAL: u64 = 10_000_000;
+static BATCH_SIZE: u64 = 1_000_000;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
@@ -50,48 +33,55 @@ fn main() -> Result<()> {
 fn compute_hashes(usable_threads: u16) {
     let sw = Arc::new(Mutex::new(Sw::new_started()));
 
+    let mut hasher = Sha256::new();
+
+    hasher.update(BASE_SENTENCE.as_bytes());
+    
     (0..usable_threads)
         .into_par_iter()
         .for_each(|_| {
             // Allocate buffers
-            let mut str_iteration_buffer: Vec<u8> = Vec::with_capacity(16); // Can hold all hex values up to u64::MAX
-            let mut sentence_buffer: Vec<u8> = Vec::with_capacity(64);
-
-            let mut hasher = Sha256::new();
+            let mut str_iteration_buffer: Vec<u8> = vec![0u8; 16];
+            let mut hasher_finalize_buffer = vec![0u8; 32];
+            let mut sentence_hex_buffer = vec![0u8; 64];
 
             while !MATCHED.load(Ordering::Acquire) {
-                let current_iteration = ITERATION.fetch_add(1, Ordering::AcqRel);
+                let mut current_iteration = ITERATION.fetch_add(BATCH_SIZE, Ordering::AcqRel);
 
-                str_iteration_buffer.clear();
-                #[allow(clippy::cast_possible_truncation)]
-                unsigned_num_to_hex(current_iteration as usize, &mut str_iteration_buffer);
+                for _ in 0..BATCH_SIZE {
+                    #[allow(clippy::cast_possible_truncation)]
+                    unsigned_num_to_hex(current_iteration as usize, &mut str_iteration_buffer);
 
-                let str_iteration_end = &str_iteration_buffer[str_iteration_buffer.len() - 9..];
+                    let str_iteration_end = &str_iteration_buffer[str_iteration_buffer.len() - 9..];
 
-                sentence_buffer.clear();
-                sentence_buffer.extend(BASE_SENTENCE.as_bytes());
-                sentence_buffer.extend(str_iteration_end);
+                    let mut hasher_clone = hasher.clone();
 
-                hasher.update(&sentence_buffer);
+                    hasher_clone.update(str_iteration_end);
 
-                let sentence_hash = hasher.finalize_reset();
-                let sentence_hex = base16ct::upper::encode_string(&sentence_hash);
-                let hash_end = &sentence_hex[sentence_hex.len() - 9..];
+                    hasher_clone.finalize_into(hasher_finalize_buffer.as_mut_slice().into());
 
-                if str_iteration_end == hash_end.as_bytes() {
-                    let mut sw = sw.lock().unwrap();
+                    base16ct::upper::encode(&hasher_finalize_buffer, &mut sentence_hex_buffer).unwrap();
 
-                    MATCHED.store(true, Ordering::Release);
+                    let hash_end = &sentence_hex_buffer[sentence_hex_buffer.len() - 9..];
 
-                    sw.stop().unwrap();
-                    println!("Finished in: {:?} | Iteration Count: {} | Threads Used: {}", sw.elapsed(), current_iteration, usable_threads);
-                    println!("Sentence: {} \nFull Sentence Hash: {sentence_hex} \nHash End: {hash_end} \nIteration Hash End: {hash_end}", String::from_utf8_lossy(&sentence_buffer));
+                    if str_iteration_end == hash_end {
+                        let mut sw = sw.lock().unwrap();
+                        let final_sentence = format!("{}{}", BASE_SENTENCE, String::from_utf8_lossy(str_iteration_end));
 
-                    break;
-                }
+                        MATCHED.store(true, Ordering::Release);
 
-                if current_iteration % LOG_INTERVAL == 0 {
-                    println!("{current_iteration} | Iter Str: {} | Hash End Str: {hash_end}", String::from_utf8_lossy(str_iteration_end));
+                        sw.stop().unwrap();
+                        println!("Finished in: {:?} | Iteration Count: {} | Threads Used: {}", sw.elapsed(), current_iteration, usable_threads);
+                        println!("Sentence: {final_sentence} \nFull Sentence Hash: {} \nHash End: {} \nIteration Hash End: {}", String::from_utf8_lossy(&sentence_hex_buffer), String::from_utf8_lossy(hash_end), String::from_utf8_lossy(str_iteration_end));
+
+                        break;
+                    }
+
+                    if current_iteration % LOG_INTERVAL == 0 {
+                        println!("{current_iteration} | Iter Str: {} | Hash End Str: {}", String::from_utf8_lossy(str_iteration_end), String::from_utf8_lossy(hash_end));
+                    }
+
+                    current_iteration += 1;
                 }
             }
         });
