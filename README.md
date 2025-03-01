@@ -47,6 +47,15 @@ cargo run --release
 | 1.0.0   | 48,405,995,370 | 918.937s | ~ 52.676 MIPS         | 12    |
 | 1.1.0   | 48,405,995,370 | 387.078s | ~ 125.055 MIPS        | 12    |
 
+- CPU: **AMD Ryzen 9800X3D**
+- OS: **Arch Linux**
+- Kernel: **6.13.4-zen1-1-zen**
+- rustc: **1.85.0**
+
+| Version | Iterations     | Duration | Iterations per Second | Cores |
+|---------|----------------|----------|-----------------------|-------|
+| 1.1.0   | 48,405,995,370 | 326.548s | ~ 148.235 MIPS        | 12    |
+
 
 - CPU: **Intel Xeon E5-2697 v2 x2**
 - OS: **ProxMox VE 8.2.7**
