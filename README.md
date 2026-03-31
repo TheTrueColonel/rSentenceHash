@@ -55,7 +55,9 @@ cargo run --release
 | Version | Iterations     | Duration | Iterations per Second | Cores |
 |---------|----------------|----------|-----------------------|-------|
 | 1.1.0   | 48,405,995,370 | 326.548s | ~ 148.235 MIPS        | 12    |
+| 1.2.0   | 48,405,995,370 | 314.348s | ~ 153.989 MIPS        | 12    |
 
+> Base performance regressed for the 9800X3D to ~350s before performance upgrades
 
 - CPU: **Intel Xeon E5-2697 v2 x2**
 - OS: **ProxMox VE 8.2.7**
